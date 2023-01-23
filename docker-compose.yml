@@ -5,7 +5,7 @@ services:
     image: towfiqi/serpbear
     restart: unless-stopped
     ports:
-      - 3000:3000
+      - 3005:3005
     volumes:
       - serpbear_appdata:/app/data
 networks:
