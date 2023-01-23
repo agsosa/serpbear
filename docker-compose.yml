@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  app:
+    image: towfiqi/serpbear
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - serpbear_appdata:/app/data
+networks:
+  my-network:
+    driver: bridge
+volumes:
+  serpbear_appdata:
