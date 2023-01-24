@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { CSSTransition } from 'react-transition-group';
 import AddKeywords from './AddKeywords';
 import { filterKeywords, keywordsByDevice, sortKeywords } from '../../utils/sortFilter';
@@ -28,6 +28,7 @@ const KeywordsTable = (props: KeywordsTableProps) => {
    const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
    const [showKeyDetails, setShowKeyDetails] = useState<KeywordType|null>(null);
    const [showRemoveModal, setShowRemoveModal] = useState<boolean>(false);
+   const [showClipboardModal, setShowClipboardModal] = useState<boolean>(false);
    const [showTagManager, setShowTagManager] = useState<null|number>(null);
    const [showAddTags, setShowAddTags] = useState<boolean>(false);
    const [filterParams, setFilterParams] = useState<KeywordFilters>({ countries: [], tags: [], search: '' });
@@ -68,6 +69,25 @@ const KeywordsTable = (props: KeywordsTableProps) => {
       setSelectedKeywords(updatedSelectd);
    };
 
+   // TODO: Make it reusable for SCKeywordsTable
+   const copySelectedKeywordsToClipboard = (separation: 'comma' | 'new_line' | 'vertical_bar') => {
+      const kwObjList = processedKeywords[device].filter((kw) => selectedKeywords.includes(kw.ID));
+      const kwList = kwObjList.map((kw) => kw.keyword);
+
+      switch (separation) {
+         case 'new_line':
+            navigator.clipboard.writeText(kwList.join('\r\n'));
+            break;
+         case 'vertical_bar':
+            navigator.clipboard.writeText(kwList.join('|'));
+            break;
+         default:
+            navigator.clipboard.writeText(kwList.join(', '));
+      }
+
+      toast('Copied to clipboard');
+   };
+
    const selectedAllItems = selectedKeywords.length === processedKeywords[device].length;
 
    return (
@@ -97,6 +117,15 @@ const KeywordsTable = (props: KeywordsTableProps) => {
                         onClick={() => setShowAddTags(true)}
                         >
                            <span className=' bg-green-100 text-green-500  px-1 rounded'><Icon type="tags" size={14} /></span> Tag Keywords</a>
+                     </li>
+                     <li className='inline-block mr-4'>
+                        <a
+                        className='block px-2 py-2 cursor-pointer hover:text-indigo-600'
+                        onClick={() => setShowClipboardModal(true)}
+                        >
+                           <span className=' bg-amber-100 text-amber-500  px-1 rounded'><Icon type='clipboard' size={14} /></span>
+                           Copy Keywords to clipboard
+                        </a>
                      </li>
                   </ul>
                </div>
@@ -216,6 +245,30 @@ const KeywordsTable = (props: KeywordsTableProps) => {
                      </div>
                   </div>
             </Modal>
+         )}
+         {showClipboardModal && (<Modal closeModal={() => { setShowClipboardModal(false); }}
+            title={`Copy ${selectedKeywords.length} Keywords to clipboard`}>
+                  <div className='text-sm'>
+                     <p>How would you like to separate the keywords?</p>
+                     <div className='mt-6 text-right font-semibold flex justify-center'>
+                     <button
+                        className=' py-1 px-5 rounded cursor-pointer bg-red-400 text-white mr-3'
+                        onClick={() => {copySelectedKeywordsToClipboard('vertical_bar'); setShowClipboardModal(false); }}>
+                           By vertical bar
+                        </button>
+                        <button
+                        className=' py-1 px-5 rounded cursor-pointer bg-red-400 text-white mr-3'
+                        onClick={() => { copySelectedKeywordsToClipboard('comma'); setShowClipboardModal(false)}}>
+                           By comma
+                        </button>
+                        <button
+                        className=' py-1 px-5 rounded cursor-pointer bg-red-400 text-white'
+                        onClick={() => {copySelectedKeywordsToClipboard('new_line'); setShowClipboardModal(false); }}>
+                           By new line
+                        </button>
+                     </div>
+                  </div>
+         </Modal>
          )}
          <CSSTransition in={showAddModal} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
             <AddKeywords
